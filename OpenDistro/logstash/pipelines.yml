@@ -1,0 +1,20 @@
+# This file is where you define your pipelines. You can define multiple.
+# For more information on multiple pipelines, see the documentation:
+#   https://www.elastic.co/guide/en/logstash/current/multiple-pipelines.html
+
+- pipeline.id: case1
+  path.config: "/usr/share/logstash/pipeline/case1"
+- pipeline.id: case2
+  path.config: "/usr/share/logstash/pipeline/case2"
+- pipeline.id: case3
+  path.config: "/usr/share/logstash/pipeline/case3"
+- pipeline.id: case4
+  path.config: "/usr/share/logstash/pipeline/case4"
+- pipeline.id: case1_out
+  path.config: "/usr/share/logstash/pipeline/case1_out"
+- pipeline.id: case2_out
+  path.config: "/usr/share/logstash/pipeline/case2_out"
+- pipeline.id: case3_out
+  path.config: "/usr/share/logstash/pipeline/case3_out"
+- pipeline.id: case4_out
+  path.config: "/usr/share/logstash/pipeline/case4_out"

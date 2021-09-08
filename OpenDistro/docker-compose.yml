@@ -1,0 +1,88 @@
+version: '3'
+
+services:
+  test-ls-od:
+    restart: always
+    image: docker.elastic.co/logstash/logstash-oss:7.10.2
+    container_name: test-ls-od
+    depends_on:
+      - test-kf-od
+    volumes:
+      - ./logstash/pipeline/:/usr/share/logstash/pipeline/
+      - ./logstash/env/:/usr/share/logstash/env/
+      - ./logstash/pipelines.yml:/usr/share/logstash/config/pipelines.yml
+    ports:
+      - 30554:514
+      - 30555:515
+      - 30556:516
+      - 30557:517
+
+  test-od:
+    restart: always
+    image: amazon/opendistro-for-elasticsearch:1.13.1
+    container_name: test-od
+    environment:
+      - cluster.name=qtie
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms6G -Xmx6G"
+      - discovery.type=single-node
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - ./data:/usr/share/elasticsearch/data
+      - ./mntdata:/usr/share/elasticsearch/config/mntdata
+      - ./mntdata/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+    ports:
+      - 19205:9200
+      - 19605:9600
+
+  test-kb-od:
+    restart: always
+    image: amazon/opendistro-for-elasticsearch-kibana:1.13.1
+    container_name: test-kb-od
+    ports:
+      - "15605:5601"
+    environment:
+      - ELASTICSEARCH_URL=https://test-od:9200
+      - ELASTICSEARCH_HOSTS=https://test-od:9200
+
+  test-zk-od:
+    restart: always
+    image: wurstmeister/zookeeper
+    container_name: test-zk-od
+    ports:
+      - "12185:2181"
+
+  test-kf-od:
+    restart: always
+    image: wurstmeister/kafka:2.11-1.1.1
+    container_name: test-kf-od
+    depends_on:
+      - test-zk-od
+    ports:
+      - "19095:9092"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: 127.0.0.1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://test-kf-od:9092
+      KAFKA_LISTENERS: INSIDE://:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+      KAFKA_CREATE_TOPICS: "case_1:1:1,case_2:1:1,case_3:1:1,case_4:1:1"
+      KAFKA_ZOOKEEPER_CONNECT: test-zk-od:2181
+      KAFKA_MESSAGE_MAX_BYTES: 2000000
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_LOG_CLEANER_ENABLE: 'true'
+      KAFKA_LOG_CLEANUP_POLICY: 'delete'
+      KAFKA_LOG_RETENTION_MS: 86400000
+      KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS: 3600000
+      KAFKA_LOG_RETENTION_HOURS: 24
+      KAFKA_LOG_RETENTION_BYTES: 10737418240
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+
+networks:
+  default:
+    external:
+      name: test-od
+
